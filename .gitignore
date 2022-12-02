@@ -1,0 +1,5 @@
+*.csv
+stats_test.py
+stats_scrapy.py
+/mag_stats
+/__pycache__
