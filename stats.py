@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 
-def run():
+def scrape(teams=[]):
     """_summary_
 
     Zulia: https://lvbp.com/equipo.php?team=692, 0
@@ -21,6 +21,23 @@ def run():
     La Guaira: https://lvbp.com/equipo.php?team=698, 6
     Aragua: https://lvbp.com/equipo.php?team=699, 7
     """
+
+    if not teams:
+        print('No se seleccionó ningún equipo.')
+        return
+
+    teams_dict = {
+        'zul': 0,
+        'mar': 1,
+        'lar': 2,
+        'anz': 3,
+        'car': 4,
+        'mag': 5,
+        'lag': 6,
+        'ara': 7
+    }
+
+    team_keys = [teams_dict.get(team, None) for team in teams]
 
     stats = {
         0: {'name': 'Aguilas', 'hitting': [], 'pitching': []},
@@ -42,7 +59,7 @@ def run():
     time.sleep(2)
 
     # There are only 8 teams. Iterate from 0 to 8.
-    for i in range(8):
+    for i in team_keys:
         # Click on the stats dropdown, then wait,
         # then click on the team name.w
         nav_stats = driver.find_element(
@@ -146,13 +163,11 @@ def dump_stats(stats):
                 'id': stats[key]['hitting'][i][1],
             }
 
-
-
             response = requests.post(url, data=cleansed_hit_stats)
+
             print(response.text)
             print(f'Jugador {stats[key]["hitting"][i][0]}.')
             print('\n')
-
 
         for i in range(1, len(stats[key]['pitching'])):
             cleansed_pit_stats = {
@@ -178,6 +193,64 @@ def dump_stats(stats):
     all_stats = [cleansed_hit_stats, cleansed_pit_stats]
 
     # return all_stats
+
+
+def pre_dump_stats(stats):
+    all_stats = []
+    for key in stats.keys():
+        for i in range(1, len(stats[key]['hitting'])):
+            cleansed_hit_stats = {
+                'proceso': 2,
+                'posicion': stats[key]['hitting'][i][2],
+                'ci': stats[key]['hitting'][i][10],
+                'hr': stats[key]['hitting'][i][9],
+                'peb': stats[key]['hitting'][i][18],
+                'h': stats[key]['hitting'][i][6],
+                'bb': stats[key]['hitting'][i][12],
+                'vb': stats[key]['hitting'][i][4],
+                'gp': stats[key]['hitting'][i][21],
+                'dosb': stats[key]['hitting'][i][7],
+                'tresb': stats[key]['hitting'][i][8],
+                'sf': stats[key]['hitting'][i][16],
+                'ave': stats[key]['hitting'][i][17],
+                'slg': stats[key]['hitting'][i][19],
+                'id': stats[key]['hitting'][i][1],
+            }
+
+            all_stats.append(cleansed_hit_stats)
+
+            # response = requests.post(url, data=cleansed_hit_stats)
+
+            # print(response.text)
+            # print(f'Jugador {stats[key]["hitting"][i][0]}.')
+            # print('\n')
+
+        for i in range(1, len(stats[key]['pitching'])):
+            cleansed_pit_stats = {
+                'proceso': 2,
+                'posicion': 'P',
+                'ganados': stats[key]['pitching'][i][2],
+                'perdidos': stats[key]['pitching'][i][3],
+                'salvados': stats[key]['pitching'][i][8],
+                'ip': stats[key]['pitching'][i][9],
+                'strikes': stats[key]['pitching'][i][17],
+                'bb': stats[key]['pitching'][i][14],
+                'cl': stats[key]['pitching'][i][12],
+                'efe': stats[key]['pitching'][i][4],
+                'id': stats[key]['pitching'][i][1]
+            }
+
+            all_stats.append(cleansed_pit_stats)
+
+            # response = requests.post(url, data=cleansed_pit_stats)
+
+            # print(response.text)
+            # print(f'Jugador {stats[key]["pitching"][i][0]}.')
+            # print('\n')
+
+    # all_stats = [cleansed_hit_stats, cleansed_pit_stats]
+
+    return all_stats
 
 
 def csv_dump(stats):
