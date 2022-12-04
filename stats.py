@@ -258,6 +258,57 @@ def pre_dump_stats(stats):
     return all_stats
 
 
+def dump_player(stats, id):
+    url = 'http://192.168.4.100/pizarra/scrapping/estadisticas.php'
+
+    for key in stats.keys():
+        for i in range(1, len(stats[key]['hitting'])):
+            if id in stats[key]['hitting'][i]:
+                cleansed_hit_stats = {
+                    'proceso': 2,
+                    'posicion': stats[key]['hitting'][i][2],
+                    'ci': stats[key]['hitting'][i][10],
+                    'hr': stats[key]['hitting'][i][9],
+                    'peb': stats[key]['hitting'][i][18],
+                    'h': stats[key]['hitting'][i][6],
+                    'bb': stats[key]['hitting'][i][12],
+                    'vb': stats[key]['hitting'][i][4],
+                    'gp': stats[key]['hitting'][i][21],
+                    'dosb': stats[key]['hitting'][i][7],
+                    'tresb': stats[key]['hitting'][i][8],
+                    'sf': stats[key]['hitting'][i][16],
+                    'ave': stats[key]['hitting'][i][17],
+                    'slg': stats[key]['hitting'][i][19],
+                    'id': stats[key]['hitting'][i][1],
+                }
+
+                print(cleansed_hit_stats)
+                response = requests.post(url, data=cleansed_hit_stats)
+                print(response)
+                break
+
+        for i in range(1, len(stats[key]['pitching'])):
+            if id in stats[key]['pitching'][i]:
+                cleansed_pit_stats = {
+                    'proceso': 2,
+                    'posicion': 'P',
+                    'ganados': stats[key]['pitching'][i][2],
+                    'perdidos': stats[key]['pitching'][i][3],
+                    'salvados': stats[key]['pitching'][i][8],
+                    'ip': stats[key]['pitching'][i][9],
+                    'strikes': stats[key]['pitching'][i][17],
+                    'bb': stats[key]['pitching'][i][14],
+                    'cl': stats[key]['pitching'][i][12],
+                    'efe': stats[key]['pitching'][i][4],
+                    'id': stats[key]['pitching'][i][1]
+                }
+
+                print(cleansed_pit_stats)
+                response = requests.post(url, data=cleansed_pit_stats)
+                print(response)
+                break
+
+
 def csv_dump(stats):
     for key in stats.keys():
         team_name = stats[key]['name']
