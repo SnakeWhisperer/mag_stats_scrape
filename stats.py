@@ -143,8 +143,11 @@ def get_stats(stats_type, driver):
 def dump_stats(stats):
     url = 'http://192.168.4.100/pizarra/scrapping/estadisticas.php'
 
+    responses = ''
+
     for key in stats.keys():
         for i in range(1, len(stats[key]['hitting'])):
+            responses += '\n' + stats[key]['hitting'][i][0]
             cleansed_hit_stats = {
                 'proceso': 2,
                 'posicion': stats[key]['hitting'][i][2],
@@ -164,12 +167,14 @@ def dump_stats(stats):
             }
 
             response = requests.post(url, data=cleansed_hit_stats)
+            responses += '\n' + response.text + '\n\n'
 
-            print(response.text)
-            print(f'Jugador {stats[key]["hitting"][i][0]}.')
-            print('\n')
+            # print(response.text)
+            # print(f'Jugador {stats[key]["hitting"][i][0]}.')
+            # print('\n')
 
         for i in range(1, len(stats[key]['pitching'])):
+            responses += '\n' + stats[key]['pitching'][i][0]
             cleansed_pit_stats = {
                 'proceso': 2,
                 'posicion': 'P',
@@ -185,14 +190,14 @@ def dump_stats(stats):
             }
 
             response = requests.post(url, data=cleansed_pit_stats)
+            responses += '\n' + response.text + '\n\n'
 
-            print(response.text)
-            print(f'Jugador {stats[key]["pitching"][i][0]}.')
-            print('\n')
+            # print(response.text)
+            # print(f'Jugador {stats[key]["pitching"][i][0]}.')
+            # print('\n')
 
     all_stats = [cleansed_hit_stats, cleansed_pit_stats]
-
-    # return all_stats
+    return responses
 
 
 def pre_dump_stats(stats):
