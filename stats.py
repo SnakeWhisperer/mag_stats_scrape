@@ -58,7 +58,7 @@ def scrape(teams=[]):
 
     time.sleep(2)
 
-    # There are only 8 teams. Iterate from 0 to 8.
+    # There are only 8 teams. Iterate from 0 to 7.
     for i in team_keys:
         # Click on the stats dropdown, then wait,
         # then click on the team name.w
@@ -167,11 +167,11 @@ def dump_stats(stats):
             }
 
             response = requests.post(url, data=cleansed_hit_stats)
-            responses += '\n' + response.text + '\n\n'
+            responses += '\n' + str(response) + '\n' + response.text + '\n\n'
 
-            # print(response.text)
-            # print(f'Jugador {stats[key]["hitting"][i][0]}.')
-            # print('\n')
+            print(response.text)
+            print(f'Jugador {stats[key]["hitting"][i][0]}.')
+            print('\n')
 
         for i in range(1, len(stats[key]['pitching'])):
             responses += '\n' + stats[key]['pitching'][i][0]
@@ -190,11 +190,11 @@ def dump_stats(stats):
             }
 
             response = requests.post(url, data=cleansed_pit_stats)
-            responses += '\n' + response.text + '\n\n'
+            responses += '\n' + str(response) + '\n' + response.text + '\n\n'
 
-            # print(response.text)
-            # print(f'Jugador {stats[key]["pitching"][i][0]}.')
-            # print('\n')
+            print(response.text)
+            print(f'Jugador {stats[key]["pitching"][i][0]}.')
+            print('\n')
 
     all_stats = [cleansed_hit_stats, cleansed_pit_stats]
     return responses
@@ -284,7 +284,7 @@ def dump_player(stats, id):
 
                 print(cleansed_hit_stats)
                 response = requests.post(url, data=cleansed_hit_stats)
-                print(response)
+                print(response.text)
                 break
 
         for i in range(1, len(stats[key]['pitching'])):
@@ -305,7 +305,7 @@ def dump_player(stats, id):
 
                 print(cleansed_pit_stats)
                 response = requests.post(url, data=cleansed_pit_stats)
-                print(response)
+                print(response.text)
                 break
 
 
@@ -323,3 +323,14 @@ def csv_dump(stats):
         with open(file_name, 'w+', newline='') as new_file:
             csv_writer = csv.writer(new_file)
             csv_writer.writerows(stats[key]['pitching'])
+
+
+def update_stats(teams=[]):
+    stats = scrape(teams=teams)
+
+    if stats is not None:
+        log = dump_stats(stats)
+    else:
+        print('No se seleccionó ningún equipo.')
+
+    return log
