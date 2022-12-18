@@ -52,7 +52,7 @@ def scrape(teams=[]):
 
     DRIVER_PATH = 'C:/chromedriver.exe'
     options = Options()
-    options.headless = True
+    # options.headless = True
     driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
     driver.get('https://lvbp.com/')
 
@@ -334,3 +334,28 @@ def update_stats(teams=[]):
         print('No se seleccionó ningún equipo.')
 
     return log
+
+
+def check_stats(stats, teams=[]):
+
+    teams_dict = {
+        'zul': 0,
+        'mar': 1,
+        'lar': 2,
+        'anz': 3,
+        'car': 4,
+        'mag': 5,
+        'lag': 6,
+        'ara': 7
+    }
+
+    for team in teams:
+        team_pos = teams_dict[team]
+        hitters_len = len(stats[team_pos]['hitting'])
+        pitchers_len = len(stats[team_pos]['pitching'])
+
+        for i in range(1, hitters_len):
+            print(stats[team_pos]['hitting'][i][1])
+
+        for i in range(1, pitchers_len):
+            print(stats[team_pos]['pitching'][i][1])

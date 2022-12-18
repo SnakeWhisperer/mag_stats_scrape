@@ -1,5 +1,6 @@
 *.csv
 stats_test.py
 stats_scrapy.py
+tests.py
 /mag_stats
 /__pycache__

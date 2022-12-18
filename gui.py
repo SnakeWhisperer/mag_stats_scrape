@@ -1,21 +1,44 @@
 import os
 import requests
+import sys
+import time
+import traceback
 
 from datetime import datetime
 from PyQt5 import QtCore
-from PyQt5.QtCore import QRect, QPoint, QSize, QSettings
+from PyQt5.QtCore import (QRect, QPoint, QSize, QSettings, QRunnable,
+                          QThreadPool, pyqtSlot, pyqtSignal)
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout,
                              QLabel, QHBoxLayout, QPushButton, QLineEdit)
 
 from stats import scrape, dump_stats
 
 
+class WorkerSignals(QObject):
+    finished = pyqtSignal()
+
 class Worker(QRunnable):
-    pass
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.args = args
+        self.kwargs = kwargs
+
+    @pyqtSlot()
+    def run(self):
+        print('Worker running.')
+        print(self.args, type(self.args))
+        print(self.args[0], type(self.args[0]))
+        print('------------')
+        print(*self.args)
+        scrape(*self.args)
+        print('Worker stopped')
 
 class Window(QWidget):
     def __init__(self):
         super().__init__()
+        self.threadpool = QThreadPool()
+        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
         # ------------------- Setting window size ----------------------
         self.screen = QApplication.primaryScreen()
@@ -66,10 +89,16 @@ class Window(QWidget):
 
 
 
-
-
-
-
+        self.teams_dict = {
+            'zul': (0, 'Aguilas'),
+            'mar': (1, 'Bravos'),
+            'lar': (2, 'Cardenales'),
+            'anz': (3, 'Caribes'),
+            'car': (4, 'Leones'),
+            'mag': (5, 'Navegantes'),
+            'lag': (6, 'Tiburones'),
+            'ara': (7, 'Tigres'),
+        }
 
         # --------------------------------------------------------------
 
@@ -79,7 +108,19 @@ class Window(QWidget):
         # --------------------------------------------------------------
 
     def scrape_stats(self):
-        pass
+        teams = self.teams_edit.text().split(',')
+        teams = [team.strip() for team in teams]
+
+        for team in teams:
+            if team in self.teams_dict.keys():
+                # self.status_label.setText(f"Status: Working on {self.teams_dict[team][1]}")
+                self.status_label.setText(f"Status: Scraping")
+            else:
+                pass
+            # worker = Worker([team])
+            # self.threadpool.start(worker)
+            self.threadpool.start(Worker([team]))
+
 
     def update_stats(self):
         pass
