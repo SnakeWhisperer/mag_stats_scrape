@@ -52,7 +52,7 @@ def scrape(teams=[]):
 
     DRIVER_PATH = 'C:/chromedriver.exe'
     options = Options()
-    # options.headless = True
+    options.headless = True
     driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
     driver.get('https://lvbp.com/')
 
@@ -81,6 +81,32 @@ def scrape(teams=[]):
         stats[i]['pitching'] = get_stats('pit', driver)
 
     return stats
+
+
+def scrape_team(team):
+    teams_dict = {
+        'zul': (0, 'https://lvbp.com/equipo.php?team=692'),
+        'mar': (1, 'https://lvbp.com/equipo.php?team=697'),
+        'lar': (2, 'https://lvbp.com/equipo.php?team=693'),
+        'anz': (3, 'https://lvbp.com/equipo.php?team=694'),
+        'car': (4, 'https://lvbp.com/equipo.php?team=695'),
+        'mag': (5, 'https://lvbp.com/equipo.php?team=696'),
+        'lag': (6, 'https://lvbp.com/equipo.php?team=698'),
+        'ara': (7, 'https://lvbp.com/equipo.php?team=699')
+    }
+
+    DRIVER_PATH = 'C:/chromedriver.exe'
+    options = Options()
+    options.headless = True
+    driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
+    driver.get(teams_dict[team][1])
+
+    print(f'Working on {team}')
+
+    hitting_stats = get_stats('bat', driver)
+    pitching_stats = get_stats('pit', driver)
+
+    return hitting_stats, pitching_stats
 
 
 def get_stats(stats_type, driver):
@@ -290,7 +316,7 @@ def dump_player(stats, id):
         for i in range(1, len(stats[key]['pitching'])):
             if id in stats[key]['pitching'][i]:
                 cleansed_pit_stats = {
-                    'proceso': 2,
+                    'proceso': 3,
                     'posicion': 'P',
                     'ganados': stats[key]['pitching'][i][2],
                     'perdidos': stats[key]['pitching'][i][3],

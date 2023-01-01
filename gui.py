@@ -1,3 +1,4 @@
+import functools
 import os
 import requests
 import sys
@@ -7,32 +8,46 @@ import traceback
 from datetime import datetime
 from PyQt5 import QtCore
 from PyQt5.QtCore import (QRect, QPoint, QSize, QSettings, QRunnable,
-                          QThreadPool, pyqtSlot, pyqtSignal)
+                          QThreadPool, pyqtSlot, pyqtSignal, QObject)
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout,
                              QLabel, QHBoxLayout, QPushButton, QLineEdit)
 
-from stats import scrape, dump_stats
+from stats import scrape, scrape_team, dump_stats
 
 
 class WorkerSignals(QObject):
     finished = pyqtSignal()
+    result = pyqtSignal(object)
 
 class Worker(QRunnable):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, team):
         super().__init__()
-        self.args = args
-        self.kwargs = kwargs
+        self.team = team
+        self.signals = WorkerSignals()
 
     @pyqtSlot()
     def run(self):
-        print('Worker running.')
-        print(self.args, type(self.args))
-        print(self.args[0], type(self.args[0]))
-        print('------------')
-        print(*self.args)
-        scrape(*self.args)
-        print('Worker stopped')
+        stats = scrape_team(self.team)
+        self.signals.result.emit(stats)
+        self.signals.finished.emit()
+
+
+class DumpWorker(QRunnable):
+    def __init__(self, stats):
+        super().__init__()
+        self.stats = stats
+        self.signals = WorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        log = dump_stats(self.stats)
+        self.signals.result.emit(log)
+        self.signals.finished.emit()
+
+class StatusWorker(QRunnable):
+    pass
+
 
 class Window(QWidget):
     def __init__(self):
@@ -60,7 +75,7 @@ class Window(QWidget):
             self.settings.setValue('last_scrape', '-')
 
         self.main_layout = QVBoxLayout(self)
-        self.last_scrape_label = QLabel('Last scrape: ---')
+        self.last_scrape_label = QLabel(f'Last scrape: {self.settings.value("last_scrape")} (not available)')
         self.main_layout.addWidget(self.last_scrape_label, 0, QtCore.Qt.AlignLeft)
 
         self.status_label = QLabel('Status: Inactive')
@@ -74,8 +89,6 @@ class Window(QWidget):
         # self.main_layout.addLayout(self.bottom_layout)
 
 
-
-
         self.teams_label = QLabel('Teams: ')
         self.teams_edit = QLineEdit()
         self.scrape_button = QPushButton('Scrape')
@@ -87,7 +100,7 @@ class Window(QWidget):
         self.update_button = QPushButton('Update')
         self.main_layout.addWidget(self.update_button, 0, QtCore.Qt.AlignRight)
 
-
+        self.update_button.setEnabled(False)
 
         self.teams_dict = {
             'zul': (0, 'Aguilas'),
@@ -100,29 +113,66 @@ class Window(QWidget):
             'ara': (7, 'Tigres'),
         }
 
+        self.stats = {
+            0: {'name': 'Aguilas', 'hitting': [], 'pitching': []},
+            1: {'name': 'Bravos', 'hitting': [], 'pitching': []},
+            2: {'name': 'Cardenales', 'hitting': [], 'pitching': []},
+            3: {'name': 'Caribes', 'hitting': [], 'pitching': []},
+            4: {'name': 'Leones', 'hitting': [], 'pitching': []},
+            5: {'name': 'Navegantes', 'hitting': [], 'pitching': []},
+            6: {'name': 'Tiburones', 'hitting': [], 'pitching': []},
+            7: {'name': 'Tigres', 'hitting': [], 'pitching': []}
+        }
+
         # --------------------------------------------------------------
 
         self.scrape_button.clicked.connect(self.scrape_stats)
-        self.scrape_button.clicked.connect(self.update_stats)
+        self.update_button.clicked.connect(self.update_stats)
 
         # --------------------------------------------------------------
 
+        self.num_teams = 0
+
+    def save_stats(self, stats):
+        self.stats[self.teams_dict[self.current_team][0]]['hitting'] = stats[0]
+        self.stats[self.teams_dict[self.current_team][0]]['pitching'] = stats[1]
+
+
     def scrape_stats(self):
-        teams = self.teams_edit.text().split(',')
-        teams = [team.strip() for team in teams]
+        teams_list = self.teams_edit.text().split(',')
+        teams_list = [team.strip() for team in teams_list]
+        self.num_teams = len(teams_list)
+        self.team_count = 0
+        self.scrape_button.setEnabled(False)
 
-        for team in teams:
-            if team in self.teams_dict.keys():
-                # self.status_label.setText(f"Status: Working on {self.teams_dict[team][1]}")
-                self.status_label.setText(f"Status: Scraping")
-            else:
-                pass
-            # worker = Worker([team])
-            # self.threadpool.start(worker)
-            self.threadpool.start(Worker([team]))
+        self.call_worker(teams_list, 0)
 
+    def call_worker(self, teams_list, index):
+        if index >= len(teams_list):
+            self.scrape_button.setEnabled(True)
+            self.status_label.setText(f'Status: Inactive')
+            self.update_button.setEnabled(True)
+            date_time = get_internet_datetime()
+            self.settings.setValue('last_scrape', date_time)
+            self.last_scrape_label.setText(f'Last scrape: {date_time} (available)')
+        else:
+            if teams_list[index] in self.teams_dict.keys():
+                self.current_team = teams_list[index]
+                self.status_label.setText(f'Status: Working on {self.teams_dict[teams_list[index]][1]} ({(index+1)}/{len(teams_list)})')
+                self.worker = Worker(teams_list[index])
+                self.worker.signals.finished.connect(functools.partial(self.call_worker, teams_list, index+1))
+                self.worker.signals.result.connect(self.save_stats)
+
+                self.threadpool.start(self.worker)
 
     def update_stats(self):
+        self.dump_worker = DumpWorker(self.stats)
+        self.status_label.setText('Status: Updating stats')
+        self.threadpool.start(self.dump_worker)
+        self.dump_worker.signals.finished.connect()
+        self.dump_worker.signals.result.connect(self.save_log)
+
+    def save_log(self, log):
         pass
 
 
@@ -151,7 +201,7 @@ def get_internet_datetime(time_zone: str = "America/Caracas") -> datetime:
             microsecond=r_dict["milliSeconds"] * 1000,
         )
     except Exception:
-        logger.exception("ERROR getting datetime from internet...")
+        # logger.exception("ERROR getting datetime from internet...")
         return None
 
     return dt
