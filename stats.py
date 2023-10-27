@@ -52,29 +52,41 @@ def scrape(teams=[], rr=True):
 
     DRIVER_PATH = 'C:/chromedriver.exe'
     options = Options()
-    options.headless = True
+    options.headless = False
     driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
     driver.get('https://lvbp.com/')
 
     time.sleep(2)
 
+    print(team_keys)
     # There are only 8 teams. Iterate from 0 to 7.
     for i in team_keys:
+        print(i)
         # Click on the stats dropdown, then wait,
         # then click on the team name.w
         nav_stats = driver.find_element(
             By.XPATH,
-            "//div[@id ='navbar']/ul/li[5]"
+            # "//div[@id ='navbar']/ul/li[5]"
+            "/html/body/div[2]/nav/div/div[2]/ul/li[5]/a"
         )
         nav_stats.click()
         time.sleep(1)
 
         # print('Current team: ', i)
-        team_link = driver.find_element(
+        # team_link = driver.find_element(
+        #     By.XPATH,
+        #     # "//div[@id ='navbar']/ul/li[5]/ul/li[" + f"{12+i}" + "]"
+        #     "/html/body/div[2]/nav/div/div[2]/ul/li[12]/ul/li[" + f"{1+i}" + "]"
+        # )
+
+        team_stats_link = driver.find_element(
             By.XPATH,
-            "//div[@id ='navbar']/ul/li[5]/ul/li[" + f"{12+i}" + "]"
+            "/html/body/div[2]/nav/div/div[2]/ul/li[5]/ul/li[3]/a"
         )
-        team_link.click()
+
+        # team_link.click()
+
+        team_stats_link.click()
         time.sleep(1)
         print(f'Trabajando en {stats[i]["name"]}...')
         stats[i]['hitting'] = get_stats('bat', driver, rr=rr)
@@ -112,14 +124,20 @@ def scrape_team(team):
 def get_stats(stats_type, driver, rr=True):
     if rr:
         stats_type += '_l'
+
+
+
+
     player_rows = driver.find_elements(
         By.XPATH,
-        f"//div[@id='{stats_type}']/table/tbody/tr"
+        # f"//div[@id='{stats_type}']/table/tbody/tr"
+        "/html/body/div[4]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr"
     )
 
     stats_cols = driver.find_elements(
         By.XPATH,
-        f"//div[@id='{stats_type}']/table/thead/tr/th"
+        # f"//div[@id='{stats_type}']/table/thead/tr/th"
+        "/html/body/div[4]/div/div/div[2]/div[2]/div/div/div[1]/div/table/thead/tr/th[1]"
     )
 
     headers = [el.get_attribute('innerHTML') for el in stats_cols]
