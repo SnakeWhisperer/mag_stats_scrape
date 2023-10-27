@@ -7,6 +7,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 
 
 def scrape(teams=[], rr=True):
@@ -40,14 +41,14 @@ def scrape(teams=[], rr=True):
     team_keys = [teams_dict.get(team, None) for team in teams]
 
     stats = {
-        0: {'name': 'Aguilas', 'hitting': [], 'pitching': []},
-        1: {'name': 'Bravos', 'hitting': [], 'pitching': []},
-        2: {'name': 'Cardenales', 'hitting': [], 'pitching': []},
-        3: {'name': 'Caribes', 'hitting': [], 'pitching': []},
-        4: {'name': 'Leones', 'hitting': [], 'pitching': []},
-        5: {'name': 'Navegantes', 'hitting': [], 'pitching': []},
-        6: {'name': 'Tiburones', 'hitting': [], 'pitching': []},
-        7: {'name': 'Tigres', 'hitting': [], 'pitching': []}
+        0: {'name': 'Aguilas', 'hitting': [], 'pitching': [], 'id': 692},
+        1: {'name': 'Bravos', 'hitting': [], 'pitching': [], 'id': 697},
+        2: {'name': 'Cardenales', 'hitting': [], 'pitching': [], 'id': 693},
+        3: {'name': 'Caribes', 'hitting': [], 'pitching': [], 'id': 694},
+        4: {'name': 'Leones', 'hitting': [], 'pitching': [], 'id': 695},
+        5: {'name': 'Navegantes', 'hitting': [], 'pitching': [], 'id': 696},
+        6: {'name': 'Tiburones', 'hitting': [], 'pitching': [], 'id': 698},
+        7: {'name': 'Tigres', 'hitting': [], 'pitching': [], 'id': 699}
     }
 
     DRIVER_PATH = 'C:/chromedriver.exe'
@@ -63,7 +64,7 @@ def scrape(teams=[], rr=True):
     for i in team_keys:
         print(i)
         # Click on the stats dropdown, then wait,
-        # then click on the team name.w
+        # then click on the team name.
         nav_stats = driver.find_element(
             By.XPATH,
             # "//div[@id ='navbar']/ul/li[5]"
@@ -89,10 +90,88 @@ def scrape(teams=[], rr=True):
         team_stats_link.click()
         time.sleep(1)
         print(f'Trabajando en {stats[i]["name"]}...')
-        stats[i]['hitting'] = get_stats('bat', driver, rr=rr)
-        stats[i]['pitching'] = get_stats('pit', driver, rr=rr)
+        stats[i]['hitting'] = get_stats('bat', driver, stats[i]['id'], rr=rr)
+        stats[i]['pitching'] = get_stats('pit', driver, stats[i]['id'], rr=rr)
 
     return stats
+
+
+def scrape_last(teams=[], rr=False):
+    if not teams:
+        print('No se seleccionó ningún equipo.')
+        return
+
+    teams_dict = {
+        'zul': 0,
+        'mar': 1,
+        'lar': 2,
+        'anz': 3,
+        'car': 4,
+        'mag': 5,
+        'lag': 6,
+        'ara': 7
+    }
+
+    team_keys = [teams_dict.get(team, None) for team in teams]
+
+    stats = {
+        0: {'name': 'Aguilas', 'hitting': [], 'pitching': [], 'id': 692},
+        1: {'name': 'Bravos', 'hitting': [], 'pitching': [], 'id': 697},
+        2: {'name': 'Cardenales', 'hitting': [], 'pitching': [], 'id': 693},
+        3: {'name': 'Caribes', 'hitting': [], 'pitching': [], 'id': 694},
+        4: {'name': 'Leones', 'hitting': [], 'pitching': [], 'id': 695},
+        5: {'name': 'Navegantes', 'hitting': [], 'pitching': [], 'id': 696},
+        6: {'name': 'Tiburones', 'hitting': [], 'pitching': [], 'id': 698},
+        7: {'name': 'Tigres', 'hitting': [], 'pitching': [], 'id': 699}
+    }
+
+    DRIVER_PATH = 'C:/chromedriver.exe'
+    options = Options()
+    options.headless = False
+    driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
+    driver.get('https://lvbp.com/')
+
+    time.sleep(2)
+    print(team_keys)
+
+    # Stats button
+    nav_stats = driver.find_element(
+        By.XPATH,
+        "/html/body/div[2]/nav/div/div[2]/ul/li[5]/a"
+    )
+
+    nav_stats.click()
+
+    # Select stats by team
+    team_stats_link = driver.find_element(
+        By.XPATH,
+        "/html/body/div[2]/nav/div/div[2]/ul/li[5]/ul/li[3]/a"
+    )
+
+    team_stats_link.click()
+    time.sleep(3)
+
+    for i in team_keys:
+        print(f'Trabajando en {stats[i]["name"]}...')
+        team_select = driver.find_element(
+            By.XPATH,
+            "/html/body/div[4]/div/div/div[2]/div[2]/div/form/div[2]/select"
+        )
+
+        team_select = Select(team_select)
+
+        team_select.select_by_value(str(stats[i]['id']))
+
+        player_rows = driver.find_elements(
+            By.XPATH,
+            # f"//div[@id='{stats_type}']/table/tbody/tr"
+            "/html/body/div[4]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr"
+        )
+
+
+def get_stats_last(stats_type, driver, rr=False):
+    pass
+
 
 
 def scrape_team(team):
@@ -121,18 +200,27 @@ def scrape_team(team):
     return hitting_stats, pitching_stats
 
 
-def get_stats(stats_type, driver, rr=True):
+def get_stats(stats_type, driver, team_id, rr=True):
     if rr:
         stats_type += '_l'
 
+    team_select = driver.find_element(
+        By.XPATH,
+        "/html/body/div[4]/div/div/div[2]/div[2]/div/form/div[2]/select"
+    )
 
+    team_select = Select(team_select)
 
+    team_select.select_by_value(str(team_id))
 
     player_rows = driver.find_elements(
         By.XPATH,
         # f"//div[@id='{stats_type}']/table/tbody/tr"
         "/html/body/div[4]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr"
     )
+
+    print('Player rows')
+    print(player_rows)
 
     stats_cols = driver.find_elements(
         By.XPATH,
