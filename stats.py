@@ -162,15 +162,35 @@ def scrape_last(teams=[], rr=False):
 
         team_select.select_by_value(str(stats[i]['id']))
 
-        player_rows = driver.find_elements(
-            By.XPATH,
-            # f"//div[@id='{stats_type}']/table/tbody/tr"
-            "/html/body/div[4]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr"
-        )
+        time.sleep(2)
+
+        stats[i]['hitting'] = get_stats_last('hit', driver, rr=False)
+        time.sleep(3)
+        stats[i]['pitching'] = get_stats_last('pit', driver, rr=False)
+        time.sleep(3)
+        
 
 
 def get_stats_last(stats_type, driver, rr=False):
-    pass
+    type_select = driver.find_element(
+        By.XPATH,
+        "/html/body/div[4]/div/div/div[2]/div[2]/div/form/div[4]/select"
+    )
+
+    type_select = Select(type_select)
+
+    if stats_type == 'hit':
+        type_select.select_by_value('hittings')
+    elif stats_type == 'pit':
+        type_select.select_by_value('pitchings')
+
+    player_rows = driver.find_elements(
+        By.XPATH,
+        "/html/body/div[4]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr"
+    )
+
+    print('Player rows')
+    print(player_rows)
 
 
 
