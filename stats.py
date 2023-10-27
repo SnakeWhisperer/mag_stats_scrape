@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 
-def scrape(teams=[]):
+def scrape(teams=[], rr=True):
     """_summary_
 
     Zulia: https://lvbp.com/equipo.php?team=692, 0
@@ -77,8 +77,8 @@ def scrape(teams=[]):
         team_link.click()
         time.sleep(1)
         print(f'Trabajando en {stats[i]["name"]}...')
-        stats[i]['hitting'] = get_stats('bat', driver)
-        stats[i]['pitching'] = get_stats('pit', driver)
+        stats[i]['hitting'] = get_stats('bat', driver, rr=rr)
+        stats[i]['pitching'] = get_stats('pit', driver, rr=rr)
 
     return stats
 
@@ -109,7 +109,9 @@ def scrape_team(team):
     return hitting_stats, pitching_stats
 
 
-def get_stats(stats_type, driver):
+def get_stats(stats_type, driver, rr=True):
+    if rr:
+        stats_type += '_l'
     player_rows = driver.find_elements(
         By.XPATH,
         f"//div[@id='{stats_type}']/table/tbody/tr"
@@ -179,7 +181,7 @@ def dump_stats(stats):
                 'posicion': stats[key]['hitting'][i][2],
                 'ci': stats[key]['hitting'][i][10],
                 'hr': stats[key]['hitting'][i][9],
-                'peb': stats[key]['hitting'][i][18],
+                'peb': stats[key]['hitting'][i][18].replace('.', ''),
                 'h': stats[key]['hitting'][i][6],
                 'bb': stats[key]['hitting'][i][12],
                 'vb': stats[key]['hitting'][i][4],
@@ -187,8 +189,8 @@ def dump_stats(stats):
                 'dosb': stats[key]['hitting'][i][7],
                 'tresb': stats[key]['hitting'][i][8],
                 'sf': stats[key]['hitting'][i][16],
-                'ave': stats[key]['hitting'][i][17],
-                'slg': stats[key]['hitting'][i][19],
+                'ave': stats[key]['hitting'][i][17].replace('.', ''),
+                'slg': stats[key]['hitting'][i][19].replace('.', ''),
                 'id': stats[key]['hitting'][i][1],
             }
 
@@ -202,7 +204,7 @@ def dump_stats(stats):
         for i in range(1, len(stats[key]['pitching'])):
             responses += '\n' + stats[key]['pitching'][i][0]
             cleansed_pit_stats = {
-                'proceso': 2,
+                'proceso': 3,
                 'posicion': 'P',
                 'ganados': stats[key]['pitching'][i][2],
                 'perdidos': stats[key]['pitching'][i][3],
@@ -258,7 +260,7 @@ def pre_dump_stats(stats):
 
         for i in range(1, len(stats[key]['pitching'])):
             cleansed_pit_stats = {
-                'proceso': 2,
+                'proceso': 3,
                 'posicion': 'P',
                 'ganados': stats[key]['pitching'][i][2],
                 'perdidos': stats[key]['pitching'][i][3],
