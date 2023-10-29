@@ -261,6 +261,7 @@ def dump_stats(stats):
                 'ganados': stats[key]['pitching'][i][2],
                 'perdidos': stats[key]['pitching'][i][3],
                 'salvados': stats[key]['pitching'][i][8],
+                'h': stats[key]['pitching'][i][10],
                 'ip': stats[key]['pitching'][i][9],
                 'strikes': stats[key]['pitching'][i][16],
                 'bb': stats[key]['pitching'][i][14],
