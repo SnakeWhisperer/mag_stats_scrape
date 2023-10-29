@@ -104,7 +104,7 @@ def scrape(teams=[], rr=False):
         stats[i]['pitching'] = get_stats('pit', driver, div_place, rr=False)
         time.sleep(5)
         
-
+    return stats
 
 def get_stats(stats_type, driver, div_place, rr=False):
 
@@ -165,6 +165,8 @@ def get_stats(stats_type, driver, div_place, rr=False):
 
     # headers = [el.get_attribute('innerHTML').strip() for el in stats_cols]
     headers.insert(1, 'id')
+    if stats_type == 'hit':
+        headers.insert(2, 'POS')
 
     print('Headers')
     print(headers)
@@ -172,10 +174,174 @@ def get_stats(stats_type, driver, div_place, rr=False):
     all_player_stats = []
     all_player_stats.append(headers)
 
-    # for i in range(1, len(player_rows)):
-    #     current_stats = []
-    #     try:
-    #         player_link = driver.find_element(
-    #             By.XPATH,
+    for i in range(1, len(player_rows)):
+        current_stats = []
+        try:
+            player_link = driver.find_element(
+                By.XPATH,
+                f"/html/body/div[{div_place}]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr[{i}]/td[1]/a"
+            )
+        except NoSuchElementException:
+            break
 
-    #         )
+        if stats_type == 'hit':
+            player_pos = driver.find_element(
+                By.XPATH,
+                f"/html/body/div[{div_place}]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr[{i}]/td[1]/span"
+            )
+
+            player_pos = player_pos.get_attribute('innerHTML').strip()
+
+        player_name = player_link.get_attribute('innerHTML')
+        player_name = re.sub('[\*#]', '', player_name).strip()
+        player_link = player_link.get_attribute('href')
+        player_id = re.search('\d+', player_link).group()
+
+        
+
+        current_stats.append(player_name)
+        current_stats.append(player_id)
+        if stats_type == 'hit':
+            current_stats.append(player_pos)
+
+        current_player_stats_els = driver.find_elements(
+            By.XPATH,
+            f"/html/body/div[{div_place}]/div/div/div[2]/div[2]/div/div/div[1]/div/table/tbody/tr[{i}]/td"
+        )
+
+        current_player_stats_els.pop(0)
+
+        for j, element in enumerate(current_player_stats_els):
+            current_val = element.get_attribute('innerHTML')
+            current_stats.append(current_val)
+
+        all_player_stats.append(current_stats)
+
+    return all_player_stats
+
+
+def dump_stats(stats):
+    url = 'http://192.168.4.100/pizarra/scrapping/estadisticas.php'
+
+    responses = ''
+
+    for key in stats.keys():
+        for i in range(1, len(stats[key]['hitting'])):
+            responses += '\n' + stats[key]['hitting'][i][0]
+            cleansed_hit_stats = {
+                'proceso': 2,
+                'posicion': stats[key]['hitting'][i][2],
+                'ci': stats[key]['hitting'][i][10],
+                'hr': stats[key]['hitting'][i][9],
+                'peb': stats[key]['hitting'][i][18].replace('.', ''),
+                'h': stats[key]['hitting'][i][6],
+                'bb': stats[key]['hitting'][i][12],
+                'vb': stats[key]['hitting'][i][4],
+                'gp': stats[key]['hitting'][i][21],
+                'dosb': stats[key]['hitting'][i][7],
+                'tresb': stats[key]['hitting'][i][8],
+                'sf': stats[key]['hitting'][i][16],
+                'ave': stats[key]['hitting'][i][17].replace('.', ''),
+                'slg': stats[key]['hitting'][i][19].replace('.', ''),
+                'id': stats[key]['hitting'][i][1],
+            }
+
+            response = requests.post(url, data=cleansed_hit_stats)
+            responses += '\n' + str(response) + '\n' + response.text + '\n\n'
+
+            print(response.text)
+            print(f'Jugador {stats[key]["hitting"][i][0]}.')
+            print('\n')
+
+        for i in range(1, len(stats[key]['pitching'])):
+            responses += '\n' + stats[key]['pitching'][i][0]
+            cleansed_pit_stats = {
+                'proceso': 3,
+                'posicion': 'P',
+                'ganados': stats[key]['pitching'][i][2],
+                'perdidos': stats[key]['pitching'][i][3],
+                'salvados': stats[key]['pitching'][i][8],
+                'ip': stats[key]['pitching'][i][9],
+                'strikes': stats[key]['pitching'][i][16],
+                'bb': stats[key]['pitching'][i][14],
+                'cl': stats[key]['pitching'][i][12],
+                'efe': stats[key]['pitching'][i][4],
+                'id': stats[key]['pitching'][i][1]
+            }
+
+            response = requests.post(url, data=cleansed_pit_stats)
+            responses += '\n' + str(response) + '\n' + response.text + '\n\n'
+
+            print(response.text)
+            print(f'Jugador {stats[key]["pitching"][i][0]}.')
+            print('\n')
+
+    all_stats = [cleansed_hit_stats, cleansed_pit_stats]
+    return responses
+
+
+def dump_player(stats, id):
+    url = 'http://192.168.4.100/pizarra/scrapping/estadisticas.php'
+
+    for key in stats.keys():
+        for i in range(1, len(stats[key]['hitting'])):
+            if id in stats[key]['hitting'][i]:
+                cleansed_hit_stats = {
+                    'proceso': 2,
+                    'posicion': stats[key]['hitting'][i][2],
+                    'ci': stats[key]['hitting'][i][10],
+                    'hr': stats[key]['hitting'][i][9],
+                    'peb': stats[key]['hitting'][i][18],
+                    'h': stats[key]['hitting'][i][6],
+                    'bb': stats[key]['hitting'][i][12],
+                    'vb': stats[key]['hitting'][i][4],
+                    'gp': stats[key]['hitting'][i][21],
+                    'dosb': stats[key]['hitting'][i][7],
+                    'tresb': stats[key]['hitting'][i][8],
+                    'sf': stats[key]['hitting'][i][16],
+                    'ave': stats[key]['hitting'][i][17],
+                    'slg': stats[key]['hitting'][i][19],
+                    'id': stats[key]['hitting'][i][1],
+                }
+
+                print(cleansed_hit_stats)
+                response = requests.post(url, data=cleansed_hit_stats)
+                print(response.text)
+                break
+
+        for i in range(1, len(stats[key]['pitching'])):
+            if id in stats[key]['pitching'][i]:
+                cleansed_pit_stats = {
+                    'proceso': 3,
+                    'posicion': 'P',
+                    'ganados': stats[key]['pitching'][i][2],
+                    'perdidos': stats[key]['pitching'][i][3],
+                    'salvados': stats[key]['pitching'][i][8],
+                    'ip': stats[key]['pitching'][i][9],
+                    'strikes': stats[key]['pitching'][i][17],
+                    'bb': stats[key]['pitching'][i][14],
+                    'cl': stats[key]['pitching'][i][12],
+                    'efe': stats[key]['pitching'][i][4],
+                    'id': stats[key]['pitching'][i][1]
+                }
+
+                print(cleansed_pit_stats)
+                response = requests.post(url, data=cleansed_pit_stats)
+                print(response.text)
+                break
+
+
+def csv_dump(stats):
+    for key in stats.keys():
+        team_name = stats[key]['name']
+        file_name = f'{team_name}_hitting.csv'
+
+        with open(file_name, 'w+', newline='') as new_file:
+            csv_writer = csv.writer(new_file)
+            csv_writer.writerows(stats[key]['hitting'])
+
+        file_name = f'{team_name}_pitching.csv'
+
+        with open(file_name, 'w+', newline='') as new_file:
+            csv_writer = csv.writer(new_file)
+            csv_writer.writerows(stats[key]['pitching'])
