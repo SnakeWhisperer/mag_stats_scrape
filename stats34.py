@@ -261,11 +261,11 @@ def dump_stats(stats):
                 'ganados': stats[key]['pitching'][i][2],
                 'perdidos': stats[key]['pitching'][i][3],
                 'salvados': stats[key]['pitching'][i][8],
-                'h': stats[key]['pitching'][i][10],
-                'ip': stats[key]['pitching'][i][9],
+                'h': stats[key]['pitching'][i][11],
+                'ip': stats[key]['pitching'][i][10],
                 'strikes': stats[key]['pitching'][i][17],
-                'bb': stats[key]['pitching'][i][14],
-                'cl': stats[key]['pitching'][i][12],
+                'bb': stats[key]['pitching'][i][15],
+                'cl': stats[key]['pitching'][i][13],
                 'efe': stats[key]['pitching'][i][4],
                 'id': stats[key]['pitching'][i][1]
             }
@@ -318,10 +318,11 @@ def dump_player(stats, id):
                     'ganados': stats[key]['pitching'][i][2],
                     'perdidos': stats[key]['pitching'][i][3],
                     'salvados': stats[key]['pitching'][i][8],
-                    'ip': stats[key]['pitching'][i][9],
+                    'h': stats[key]['pitching'][i][11],
+                    'ip': stats[key]['pitching'][i][10],
                     'strikes': stats[key]['pitching'][i][17],
-                    'bb': stats[key]['pitching'][i][14],
-                    'cl': stats[key]['pitching'][i][12],
+                    'bb': stats[key]['pitching'][i][15],
+                    'cl': stats[key]['pitching'][i][13],
                     'efe': stats[key]['pitching'][i][4],
                     'id': stats[key]['pitching'][i][1]
                 }
