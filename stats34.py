@@ -263,7 +263,7 @@ def dump_stats(stats):
                 'salvados': stats[key]['pitching'][i][8],
                 'h': stats[key]['pitching'][i][10],
                 'ip': stats[key]['pitching'][i][9],
-                'strikes': stats[key]['pitching'][i][16],
+                'strikes': stats[key]['pitching'][i][17],
                 'bb': stats[key]['pitching'][i][14],
                 'cl': stats[key]['pitching'][i][12],
                 'efe': stats[key]['pitching'][i][4],
