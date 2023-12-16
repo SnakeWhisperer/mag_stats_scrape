@@ -6,6 +6,7 @@ import time
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
@@ -41,10 +42,12 @@ def scrape(teams=[], rr=False):
         7: {'name': 'Tigres', 'hitting': [], 'pitching': [], 'id': 699}
     }
 
-    DRIVER_PATH = 'C:/chromedriver.exe'
+    # DRIVER_PATH = r'C:\chromedriver.exe'
+    service = Service(executable_path=r'C:\chromedriver.exe')
     options = Options()
     options.headless = False
-    driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
+    # driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
+    driver = webdriver.Chrome(options=options, service=service)
     driver.get('https://lvbp.com/')
 
     time.sleep(2)
@@ -65,7 +68,7 @@ def scrape(teams=[], rr=False):
     )
 
     team_stats_link.click()
-    time.sleep(5)
+    time.sleep(2)
 
     for i in team_keys:
         print(f'Trabajando en {stats[i]["name"]}...')
@@ -100,9 +103,9 @@ def scrape(teams=[], rr=False):
         time.sleep(2)
 
         stats[i]['hitting'] = get_stats('hit', driver, div_place, rr=False)
-        time.sleep(5)
+        time.sleep(2)
         stats[i]['pitching'] = get_stats('pit', driver, div_place, rr=False)
-        time.sleep(5)
+        time.sleep(2)
         
     return stats
 
@@ -137,7 +140,7 @@ def get_stats(stats_type, driver, div_place, rr=False):
         print('Pitching')
         type_select.select_by_value('pitchings')
 
-    time.sleep(5)
+    time.sleep(2)
 
     player_rows = driver.find_elements(
         By.XPATH,
