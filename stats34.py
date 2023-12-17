@@ -1,4 +1,5 @@
 import csv
+import os
 import re
 import requests
 import time
@@ -281,6 +282,13 @@ def dump_stats(stats):
             print('\n')
 
     all_stats = [cleansed_hit_stats, cleansed_pit_stats]
+
+    desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    log_path = os.path.join(desktop_path, 'stats_log.txt')
+
+    with open(log_path, 'w', encoding='utf-8') as log_file:
+        log_file.write(responses)
+
     return responses
 
 
